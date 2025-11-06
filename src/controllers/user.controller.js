@@ -2,17 +2,24 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.models.js";
-import { Role } from "../models/roles.models.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt"
 
 
 const registerUser = asyncHandler(async (req, res) => {
-  const { name, email, password, role_name } = req.body;
+  const { name, email, password, role } = req.body;
 
   // Validate required fields
   if ([name, email, password].some((f) => !f?.trim())) {
     throw new ApiError(400, "All fields are required");
+  }
+
+  // Validate role - only 'user' or 'admin' allowed
+  const validRoles = ['user', 'admin'];
+  const userRole = role || 'user'; // default to 'user' if not provided
+  
+  if (!validRoles.includes(userRole)) {
+    throw new ApiError(400, "Role must be either 'user' or 'admin'");
   }
 
   // Check if user exists
@@ -21,28 +28,19 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(409, "User already exists with this email");
   }
 
-  // Get role reference
-  const role =
-    (await Role.findOne({ role_name })) ||
-    (await Role.findOne({ role_name: "Executor" })); // default role
-
-  if (!role) throw new ApiError(400, "Invalid or missing role");
-
-  
-const user = await User.create({
+  const user = await User.create({
     name,
     email,
     password,
-    role: role._id,
+    role: userRole,
   });
-  
 
   const createdUser = await User.findById(user._id)
-    .populate("role")
     .select("-password -accessToken");
-    if(!createdUser){
-        throw new ApiError(500,"something wnet wrong while registering user")
-    }
+    
+  if(!createdUser){
+    throw new ApiError(500,"Something went wrong while registering user")
+  }
 
   return res
     .status(201)
@@ -57,7 +55,7 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Email and password are required");
   }
 
-  const user = await User.findOne({ email }).populate("role");
+  const user = await User.findOne({ email });
   if (!user) throw new ApiError(404, "User not found");
 
   const isPasswordValid = await user.isPasswordCorrect(password);
@@ -66,23 +64,19 @@ const loginUser = asyncHandler(async (req, res) => {
   // Generate new token and save (invalidate previous)
   const accessToken = user.generateAccessToken(user._id);
   user.accessToken = accessToken;
-await user.save();
+  await user.save();
 
-  
-
- const options={
-        httpOnly:true,
-        secure:false
-    }
-
+  const options = {
+    httpOnly: true,
+    secure: false
+  }
 
   const loggedUser = await User.findById(user._id)
-    .populate("role")
     .select("-password -accessToken");
 
   return res
     .status(200)
-    .cookie("token",accessToken,options)
+    .cookie("token", accessToken, options)
     .json(new ApiResponse(200, loggedUser, "User logged in successfully"));
 });
 
@@ -94,17 +88,34 @@ const logoutUser = asyncHandler(async (req, res) => {
 
   await User.findByIdAndUpdate(userId, { accessToken: null });
 
-  const options={
-        httpOnly:true,
-        secure:false
-    }
+  const options = {
+    httpOnly: true,
+    secure: false
+  }
 
   return res
     .status(200)
-    .clearCookie("token",options)
+    .clearCookie("token", options)
     .json(new ApiResponse(200, {}, "User logged out successfully"));
 });
 
-export { registerUser, loginUser, logoutUser };
+// Get all users
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find({}).select("-password -accessToken").sort({ createdAt: -1 });
+    
+    res.status(200).json({
+      success: true,
+      data: users
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+export { registerUser, loginUser, logoutUser, getAllUsers };
 
 
