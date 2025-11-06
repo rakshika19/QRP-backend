@@ -23,8 +23,8 @@ const userSchema = new Schema(
       required: [true, "Password is required"],
     },
     role: {
-      type: Schema.Types.ObjectId,     
-      ref: "Role",
+      type: String,
+      enum: ["admin", "user" ],
       required: true,
     },
     status: {
