@@ -1,35 +1,34 @@
-const mongoose = require('mongoose');
+import mongoose from "mongoose";
 
 const stageSchema = new mongoose.Schema(
   {
     project_id: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Project',
-      required: true
+      ref: "Project",
+      required: true,
     },
     stage_name: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
     },
-    description: {
-      type: String
-    },
+    description: String,
     status: {
       type: String,
-      enum: ['pending', 'in_progress', 'completed'],
-      default: 'pending',
-      required: true
+      enum: ["pending", "in_progress", "completed"],
+      default: "pending",
+      required: true,
     },
     created_by: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
-    }
+      ref: "User",
+      required: true,
+    },
   },
-  {
-    timestamps: true // automatically adds createdAt and updatedAt
-  }
+  { timestamps: true }
 );
 
-module.exports = mongoose.model('Stage', stageSchema);
+const Stage = mongoose.model("Stage", stageSchema);
+
+
+export default Stage;
