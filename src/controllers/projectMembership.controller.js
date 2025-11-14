@@ -42,16 +42,20 @@ export const getProjectMembers = async (req, res) => {
 // POST /api/v1/projects/members - Add member to project
 export const addProjectMember = async (req, res) => {
     try {
-        const { project_id, user_id, role_id } = req.body;
-
-        // Check if project exists
-        const project = await Project.findById(project_id);
+        const { id } = req.params;
+       
+        
+        const project = await Project.findById(id);
+       
+        
         if (!project) {
             return res.status(404).json({
                 success: false,
                 message: 'Project not found'
             });
         }
+
+        const { user_id, role_id } = req.body;
 
         // Check if user exists
         const user = await User.findById(user_id);
@@ -72,7 +76,7 @@ export const addProjectMember = async (req, res) => {
         }
 
         const membership = await ProjectMembership.create({
-            project_id: project_id,
+            project_id: id,
             user_id: user_id,
             role: role_id
         });
@@ -86,6 +90,7 @@ export const addProjectMember = async (req, res) => {
             data: populatedMembership
         });
     } catch (error) {
+        console.error('❌ Error:', error);
         // Handle duplicate key error
         if (error.code === 11000) {
             return res.status(409).json({
