@@ -25,14 +25,18 @@ import projectRoutes from './routes/project.routes.js';
 import projectMembershipRoutes from './routes/projectMembership.routes.js';
 import checklistRoutes from './routes/checklist.routes.js';
 import stageRouter from "./routes/stage.routes.js"
+import checkPointRoutes from "./routes/checkpoint.route.js"
+import templateRoutes from "./routes/template.route.js"
 //routes declaration
 app.use("/api/v1",stageRouter)
 app.use('/api/v1', checklistRoutes);
 app.use("/api/v1/users",userRouter)
 app.use('/api/v1/roles', roleRoutes);
-
+app.use("/api/v1/checkpoint",checkPointRoutes);
+app.use("/app/v1/template",templateRoutes);
 app.use('/api/v1/projects', projectRoutes);
 app.use('/api/v1/projects-membership', projectMembershipRoutes);
+
 
 
 

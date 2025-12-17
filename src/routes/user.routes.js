@@ -10,7 +10,7 @@ import authMiddleware from "../middleware/auth.Middleware.js";
 
 const router = express.Router();
 
-router.get("/", getAllUsers);                         // GET /api/v1/users
+router.get("/", getAllUsers);            // GET /api/v1/users
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.post("/logout", authMiddleware, logoutUser);

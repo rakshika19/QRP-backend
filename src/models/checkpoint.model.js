@@ -2,64 +2,54 @@ import mongoose from "mongoose";
 
 const checkpointSchema = new mongoose.Schema(
   {
-    
     checklistId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Checklist",
       required: true,
     },
 
-    
     question: {
       type: String,
       required: true,
       trim: true,
     },
 
-    // 👷 Executor Response
     executorResponse: {
       answer: {
-        type: Boolean, // true / false
-        required: true,
+        type: Boolean,
+        default: null,
       },
       images: [
         {
-          type: String, // image URL or file path
+          data: Buffer,
+          contentType: String,
         },
       ],
       remark: {
         type: String,
-        requird:true,
         trim: true,
       },
-      respondedAt: {
-        type: Date,
-        default: Date.now,
-      },
+      respondedAt: Date,
     },
 
-    // 🧑‍💼 Reviewer Response
     reviewerResponse: {
       answer: {
-        type: Boolean, // approved / rejected
+        type: Boolean,
+        default: null,
       },
       images: [
         {
-          type: String,
+          data: Buffer,
+          contentType: String,
         },
       ],
-      remark: {
-        type: String,
-        trim: true,
-      },
-      reviewedAt: {
-        type: Date,
-      },
+      remark: String,
+      reviewedAt: Date,
     },
-
   },
   { timestamps: true }
 );
+
 
 const CheckPoint =mongoose.model("Checkpoint", checkpointSchema);
 

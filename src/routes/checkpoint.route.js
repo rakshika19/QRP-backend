@@ -1,13 +1,31 @@
-import {Router} from "express";
-// import authMiddleware from "../middleware/auth.Middleware";
+import { Router } from "express";
+import {
+  createCheckPoint,
+  updateCheckpointResponse,
+  deleteCheckPoint,
+} from "../controllers/checkpoint.controller.js";
 
+import { upload } from "../middleware/multer.middleware.js";
 
 const router = Router();
 
 
+router.post(
+  "/checklists/:checkListId/checkpoints",
+  createCheckPoint
+);
 
 
-router.route("/create").post()
-router.route("/:checkPointId").get()
-// router.route("/:checkPointId/edit").
-router.route("/delete/:checkPointId").delete()
+router.patch(
+  "/checkpoints/:checkpointId",
+  upload.array("images", 5),
+  updateCheckpointResponse
+);
+
+
+router.delete(
+  "/checkpoints/:checkpointId",
+  deleteCheckPoint
+);
+
+export default router;
