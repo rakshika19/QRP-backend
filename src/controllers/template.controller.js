@@ -1,92 +1,6 @@
-// import Template from "../models/template.model.js";
-// import { asyncHandler } from "../utils/asyncHandler.js";
-// import { ApiError } from "../utils/ApiError.js";
-// import { ApiResponse } from "../utils/ApiResponse.js";
 
-// // Create a new template
-// export const createTemplate = asyncHandler(async (req, res) => {
-//   const { name, stage1, stage2, stage3 } = req.body;
 
-//   if (!name) {
-//     throw new ApiError(400, "Template name is required");
-//   }
 
-//   const template = new Template({
-//     name,
-//     stage1: stage1 || [],
-//     stage2: stage2 || [],
-//     stage3: stage3 || [],
-//   });
-
-//   await template.save();
-
-//   return res
-//     .status(201)
-//     .json(new ApiResponse(201, template, "Template created successfully"));
-// });
-
-// // Get all templates or a specific template by ID
-// export const getTemplate = asyncHandler(async (req, res) => {
-//   const { id } = req.query;
-
-//   if (id) {
-//     const template = await Template.findById(id);
-//     if (!template) {
-//       throw new ApiError(404, "Template not found");
-//     }
-//     return res
-//       .status(200)
-//       .json(new ApiResponse(200, template, "Template fetched successfully"));
-//   }
-
-//   const templates = await Template.find();
-//   return res
-//     .status(200)
-//     .json(new ApiResponse(200, templates, "All templates fetched successfully"));
-// });
-
-// // Edit an existing template
-// export const editTemplate = asyncHandler(async (req, res) => {
-//   const { id } = req.query;
-//   const { name, stage1, stage2, stage3 } = req.body;
-
-//   if (!id) {
-//     throw new ApiError(400, "Template ID is required");
-//   }
-
-//   const template = await Template.findByIdAndUpdate(
-//     id,
-//     { name, stage1, stage2, stage3 },
-//     { new: true, runValidators: true }
-//   );
-
-//   if (!template) {
-//     throw new ApiError(404, "Template not found");
-//   }
-
-//   return res
-//     .status(200)
-//     .json(new ApiResponse(200, template, "Template updated successfully"));
-// });
-
-// // Delete a template
-// export const deleteTemplate = asyncHandler(async (req, res) => {
-//   const { id } = req.query;
-
-//   if (!id) {
-//     throw new ApiError(400, "Template ID is required");
-//   }
-
-//   const template = await Template.findByIdAndDelete(id);
-
-//   if (!template) {
-//     throw new ApiError(404, "Template not found");
-//   }
-
-//   return res
-//     .status(200)
-//     .json(new ApiResponse(200, {}, "Template deleted successfully"));
-// });
 
 
 import Template from "../models/template.model.js";
@@ -157,19 +71,23 @@ export const addChecklist = asyncHandler(async (req, res) => {
 });
 
 /**
- * UPDATE CHECKLIST TEXT
+ * UPDATE CHECKLIST TEXT ✅ FIXED
  */
 export const updateChecklist = asyncHandler(async (req, res) => {
   const { checklistId } = req.params;
   const { stage, text } = req.body;
 
+  if (!stage || !text) {
+    throw new ApiError(400, "Stage and text are required");
+  }
+
   const template = await Template.findOne();
   if (!template) throw new ApiError(404, "Template not found");
 
-  const checklist = template[stage]?.id(checklistId);
+  const checklist = template[stage]?.find(item => item._id.toString() === checklistId);
   if (!checklist) throw new ApiError(404, "Checklist not found");
 
-  checklist.text = text ?? checklist.text;
+  checklist.text = text;
 
   await template.save();
 
@@ -179,16 +97,26 @@ export const updateChecklist = asyncHandler(async (req, res) => {
 });
 
 /**
- * DELETE CHECKLIST
+ * DELETE CHECKLIST ✅ (Already Fixed)
  */
 export const deleteChecklist = asyncHandler(async (req, res) => {
   const { checklistId } = req.params;
   const { stage } = req.body;
 
+  if (!stage) {
+    throw new ApiError(400, "Stage is required");
+  }
+
   const template = await Template.findOne();
   if (!template) throw new ApiError(404, "Template not found");
 
-  template[stage].id(checklistId)?.remove();
+  if (!template[stage]) {
+    throw new ApiError(400, "Invalid stage");
+  }
+
+  template[stage] = template[stage].filter(
+    (item) => item._id.toString() !== checklistId
+  );
 
   await template.save();
 
@@ -198,16 +126,20 @@ export const deleteChecklist = asyncHandler(async (req, res) => {
 });
 
 /**
- * ADD CHECKPOINT
+ * ADD CHECKPOINT ✅ FIXED
  */
 export const addCheckpoint = asyncHandler(async (req, res) => {
   const { checklistId } = req.params;
   const { stage, text } = req.body;
 
+  if (!stage || !text) {
+    throw new ApiError(400, "Stage and text are required");
+  }
+
   const template = await Template.findOne();
   if (!template) throw new ApiError(404, "Template not found");
 
-  const checklist = template[stage]?.id(checklistId);
+  const checklist = template[stage]?.find(item => item._id.toString() === checklistId);
   if (!checklist) throw new ApiError(404, "Checklist not found");
 
   checklist.checkpoints.push({ text });
@@ -220,21 +152,26 @@ export const addCheckpoint = asyncHandler(async (req, res) => {
 });
 
 /**
- * UPDATE CHECKPOINT TEXT
+ * UPDATE CHECKPOINT TEXT ✅ FIXED
  */
 export const updateCheckpoint = asyncHandler(async (req, res) => {
   const { checkpointId } = req.params;
   const { stage, checklistId, text } = req.body;
 
+  if (!stage || !checklistId || !text) {
+    throw new ApiError(400, "Stage, checklistId, and text are required");
+  }
+
   const template = await Template.findOne();
   if (!template) throw new ApiError(404, "Template not found");
 
-  const checklist = template[stage]?.id(checklistId);
-  const checkpoint = checklist?.checkpoints.id(checkpointId);
+  const checklist = template[stage]?.find(item => item._id.toString() === checklistId);
+  if (!checklist) throw new ApiError(404, "Checklist not found");
 
+  const checkpoint = checklist.checkpoints.find(item => item._id.toString() === checkpointId);
   if (!checkpoint) throw new ApiError(404, "Checkpoint not found");
 
-  checkpoint.text = text ?? checkpoint.text;
+  checkpoint.text = text;
 
   await template.save();
 
@@ -244,17 +181,25 @@ export const updateCheckpoint = asyncHandler(async (req, res) => {
 });
 
 /**
- * DELETE CHECKPOINT
+ * DELETE CHECKPOINT ✅ FIXED
  */
 export const deleteCheckpoint = asyncHandler(async (req, res) => {
   const { checkpointId } = req.params;
   const { stage, checklistId } = req.body;
 
+  if (!stage || !checklistId) {
+    throw new ApiError(400, "Stage and checklistId are required");
+  }
+
   const template = await Template.findOne();
   if (!template) throw new ApiError(404, "Template not found");
 
-  const checklist = template[stage]?.id(checklistId);
-  checklist?.checkpoints.id(checkpointId)?.remove();
+  const checklist = template[stage]?.find(item => item._id.toString() === checklistId);
+  if (!checklist) throw new ApiError(404, "Checklist not found");
+
+  checklist.checkpoints = checklist.checkpoints.filter(
+    (item) => item._id.toString() !== checkpointId
+  );
 
   await template.save();
 
