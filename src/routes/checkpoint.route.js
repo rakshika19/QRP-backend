@@ -3,6 +3,8 @@ import {
   createCheckPoint,
   updateCheckpointResponse,
   deleteCheckPoint,
+  getCheckPointById,
+  getCheckpointsByChecklist
 } from "../controllers/checkpoint.controller.js";
 
 import { upload } from "../middleware/multer.middleware.js";
