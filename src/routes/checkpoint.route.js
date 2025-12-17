@@ -27,5 +27,6 @@ router.delete(
   "/checkpoints/:checkpointId",
   deleteCheckPoint
 );
-
+router.get("/checkpoints/:checkpointId",  getCheckPointById);
+router.get("/checklists/:checkListId/checkpoints", getCheckpointsByChecklist);
 export default router;

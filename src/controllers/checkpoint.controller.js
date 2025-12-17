@@ -110,10 +110,27 @@ const getCheckPointById = asyncHandler(async (req, res) => {
   );
 });
 
+const getCheckpointsByChecklist = asyncHandler(async (req, res) => {
+  const { checkListId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(checkListId)) {
+    throw new ApiError(400, "Invalid checklistId");
+  }
+
+  const checklist = await Checklist.findById(checkListId).select("_id");
+  if (!checklist) throw new ApiError(404, "Checklist not found");
+
+  const checkpoints = await CheckPoint.find({ checklistId }).sort({ createdAt: 1 });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, checkpoints, "Checkpoints fetched successfully"));
+});
 
 export {
   createCheckPoint,
   updateCheckpointResponse,
   deleteCheckPoint,
     getCheckPointById,
+    getCheckpointsByChecklist
 };
