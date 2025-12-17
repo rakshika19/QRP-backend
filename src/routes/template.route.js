@@ -4,9 +4,9 @@ import { createTemplate, getTemplate, editTemplate, deleteTemplate } from "../co
 
 const router = Router();
 
-router.route("/create").post(authMiddleware, createTemplate);
-router.route("/edit").post(authMiddleware, editTemplate);
-router.route("/get").get(authMiddleware, getTemplate);
-router.route("/delete").delete(authMiddleware, deleteTemplate);
+router.route("/create").post( createTemplate);
+router.route("/edit").post(editTemplate);
+router.route("/get").get(getTemplate);
+router.route("/delete").delete(deleteTemplate);
 
 export default router;

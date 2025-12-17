@@ -23,7 +23,7 @@ import userRouter from "./routes/user.routes.js"
 import roleRoutes from './routes/role.routes.js';
 import projectRoutes from './routes/project.routes.js';
 import projectMembershipRoutes from './routes/projectMembership.routes.js';
-import checklistRoutes from './routes/checklistRoutes.js';
+import checklistRoutes from './routes/checklist.routes.js';
 import stageRouter from "./routes/stage.routes.js"
 //routes declaration
 app.use("/api/v1",stageRouter)

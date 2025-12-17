@@ -5,10 +5,10 @@ const checklistSchema = new mongoose.Schema({
      * Answer 1: Belongs to a Stage.
      * This links the checklist to its parent stage.
      */
-    stage_id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Stage',
-        required: true
+     stage: {
+      type: String,
+      enum: ["stage1", "stage2", "stage3"],
+      required: true,
     },
 
     /**

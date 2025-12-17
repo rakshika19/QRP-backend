@@ -233,11 +233,12 @@ import ChecklistHistory from "../models/checklistTransaction.models.js";
    CREATE CHECKLIST FOR A STAGE
 ===================================================== */
 const createChecklistForStage = asyncHandler(async (req, res) => {
-  const { stageId } = req.params;
-  const { checklist_name, description, status } = req.body;
+  const { stage, checklist_name, description, status } = req.body; // Changed from stageId param to stage in body
 
-  if (!mongoose.isValidObjectId(stageId)) {
-    throw new ApiError(400, "Invalid stageId");
+  // Validate stage name (no more ObjectId validation)
+  const validStages = ["stage1", "stage2", "stage3"];
+  if (!stage || !validStages.includes(stage)) {
+    throw new ApiError(400, "Invalid stage. Must be 'stage1', 'stage2', or 'stage3'");
   }
 
   if (!checklist_name?.trim()) {
@@ -248,11 +249,11 @@ const createChecklistForStage = asyncHandler(async (req, res) => {
   if (!created_by) throw new ApiError(401, "Not authenticated");
 
   const checklist = await Checklist.create({
-    stage_id: stageId,
+    stage, // Changed from stage_id to stage
     created_by,
     checklist_name,
     description,
-    status
+    status: status || 'draft'
   });
 
   // Log history
@@ -260,7 +261,7 @@ const createChecklistForStage = asyncHandler(async (req, res) => {
     checklist_id: checklist._id,
     user_id: created_by,
     action_type: "CREATED",
-    description: `Checklist "${checklist.checklist_name}" was created.`
+    description: `Checklist "${checklist.checklist_name}" was created for ${stage}.`
   });
 
   return res
@@ -272,15 +273,17 @@ const createChecklistForStage = asyncHandler(async (req, res) => {
    GET CHECKLISTS BY STAGE
 ===================================================== */
 const listChecklistsForStage = asyncHandler(async (req, res) => {
-  const { stageId } = req.params;
+  const { stage } = req.params; // Changed from stageId to stage
 
-  if (!mongoose.isValidObjectId(stageId)) {
-    throw new ApiError(400, "Invalid stageId");
+  // Validate stage name (no more ObjectId validation)
+  const validStages = ["stage1", "stage2", "stage3"];
+  if (!validStages.includes(stage)) {
+    throw new ApiError(400, "Invalid stage. Must be 'stage1', 'stage2', or 'stage3'");
   }
 
-  const checklists = await Checklist.find({ stage_id: stageId }).sort({
-    createdAt: 1,
-  });
+  const checklists = await Checklist.find({ stage }) // Changed from stage_id to stage
+    .populate('created_by', 'name email')
+    .sort({ createdAt: 1 });
 
   return res
     .status(200)
@@ -297,7 +300,9 @@ const getChecklistById = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid checklist id");
   }
 
-  const checklist = await Checklist.findById(id);
+  const checklist = await Checklist.findById(id)
+    .populate('created_by', 'name email');
+    
   if (!checklist) throw new ApiError(404, "Checklist not found");
 
   return res
@@ -310,13 +315,23 @@ const getChecklistById = asyncHandler(async (req, res) => {
 ===================================================== */
 const updateChecklist = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { checklist_name, description, status } = req.body;
+  const { stage, checklist_name, description, status } = req.body;
 
   if (!mongoose.isValidObjectId(id)) {
     throw new ApiError(400, "Invalid checklist id");
   }
 
   const update = {};
+  
+  // Validate stage if provided
+  if (stage) {
+    const validStages = ["stage1", "stage2", "stage3"];
+    if (!validStages.includes(stage)) {
+      throw new ApiError(400, "Invalid stage. Must be 'stage1', 'stage2', or 'stage3'");
+    }
+    update.stage = stage;
+  }
+  
   if (typeof checklist_name === "string") update.checklist_name = checklist_name;
   if (typeof description === "string") update.description = description;
   if (typeof status === "string") update.status = status;
@@ -370,7 +385,7 @@ const submitChecklist = asyncHandler(async (req, res) => {
 
   await ChecklistHistory.create({
     checklist_id: id,
-    user_id: req.user._id,              // FIXED
+    user_id: req.user._id,
     action_type: "SUBMITTED_FOR_REVIEW",
     description: `Checklist "${checklist.checklist_name}" was submitted for review.`,
   });
@@ -394,7 +409,7 @@ const approveChecklist = asyncHandler(async (req, res) => {
 
   await ChecklistHistory.create({
     checklist_id: id,
-    user_id: req.user._id,              // FIXED
+    user_id: req.user._id,
     action_type: "APPROVED",
     description: `Checklist "${checklist.checklist_name}" was approved.`,
   });
@@ -419,7 +434,7 @@ const requestChanges = asyncHandler(async (req, res) => {
 
   await ChecklistHistory.create({
     checklist_id: id,
-    user_id: req.user._id,               // FIXED
+    user_id: req.user._id,
     action_type: "CHANGES_REQUESTED",
     description:
       message ||
@@ -449,11 +464,24 @@ const getChecklistHistory = asyncHandler(async (req, res) => {
 });
 
 /* =====================================================
+   GET ALL CHECKLISTS
+===================================================== */
+const getAllChecklists = asyncHandler(async (req, res) => {
+  const checklists = await Checklist.find({})
+    .populate('created_by', 'name email')
+    .sort({ createdAt: -1 });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, checklists, "All checklists fetched successfully"));
+});
+
+/* =====================================================
    EXPORT
 ===================================================== */
 export {
   createChecklistForStage,
-  listChecklistsForStage,
+  getAllChecklists, // Add this
   getChecklistById,
   updateChecklist,
   deleteChecklist,
