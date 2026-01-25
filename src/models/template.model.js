@@ -1,30 +1,5 @@
 import mongoose from "mongoose";
 
-const checkpointTemplateSchema = new mongoose.Schema({
-  text: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-});
-
-const checklistTemplateSchema = new mongoose.Schema({
-  text: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  checkpoints: {
-    type: [checkpointTemplateSchema],
-    default: [],
-  },
-});
-
-/**
- * 🚫 NO stage collection
- * 🚫 NO stage array
- * ✅ Stages are fixed keys
- */
 const templateSchema = new mongoose.Schema(
   {
     name: {
@@ -33,24 +8,40 @@ const templateSchema = new mongoose.Schema(
       trim: true,
     },
 
-    stage1: {
-      type: [checklistTemplateSchema],
-      default: [],
-    },
+    stages: {
+      type: [
+        {
+          stageName: {
+            type: String,
+            required: true,
+            trim: true,
+          },
 
-    stage2: {
-      type: [checklistTemplateSchema],
-      default: [],
-    },
+          subTopics: {
+            type: [
+              {
+                subTopic: {
+                  type: String,
+                  required: true,
+                  trim: true,
+                },
 
-    stage3: {
-      type: [checklistTemplateSchema],
+                // ✅ checkpoints belong to subTopic
+                checkpoints: {
+                  type: [String], // just text
+                  default: [],
+                },
+              },
+            ],
+            default: [],
+          },
+        },
+      ],
       default: [],
     },
   },
   { timestamps: true }
 );
 
-const  Template= mongoose.model("Template", templateSchema);
-
+const Template = mongoose.model("Template", templateSchema);
 export default Template;

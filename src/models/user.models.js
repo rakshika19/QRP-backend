@@ -21,6 +21,7 @@ const userSchema = new Schema(
     password: {
       type: String,
       required: [true, "Password is required"],
+      select: false,
     },
     role: {
       type: String,
@@ -32,9 +33,10 @@ const userSchema = new Schema(
       enum: ["active", "inactive", "locked"],
       default: "active",
     },
-    accessToken: {
+    refreshToken: {
       type: String,
       default: null, 
+      select: false,
     },
   },
   {
