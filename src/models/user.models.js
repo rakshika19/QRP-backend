@@ -4,10 +4,11 @@ import bcrypt from "bcrypt";
 
 const userSchema = new Schema(
   {
-    name: {
+    username: {
       type: String,
       required: true,
       trim: true,
+      unique: true,
       index: true,
     },
     email: {
@@ -63,7 +64,7 @@ userSchema.methods.generateAccessToken = function () {
       _id: this._id,
       email: this.email,
       role: this.role,
-      name: this.name,
+      username: this.username,
     },
     process.env.ACCESS_TOKEN_SECRET,
     {
@@ -71,6 +72,17 @@ userSchema.methods.generateAccessToken = function () {
     }
   );
 };
+
+
+
+userSchema.methods.generateRefreshToken = function () {
+  return jwt.sign(
+    { _id: this._id },
+    process.env.REFRESH_TOKEN_SECRET,
+    { expiresIn: process.env.REFRESH_TOKEN_EXPIRY }
+  );
+};
+
 
 
 userSchema.methods.toJSON = function () {
@@ -81,3 +93,13 @@ userSchema.methods.toJSON = function () {
 };
 
 export const User = mongoose.model("User", userSchema);
+
+
+
+
+
+
+
+
+
+

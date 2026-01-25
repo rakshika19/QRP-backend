@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { seedRoles } from "../utils/seedRoles.js";
 import dotenv from "dotenv";
 dotenv.config({
-    path:'./.env'
+    path:'../.env'
 })
 const connectDB=async ()=>{
     try{

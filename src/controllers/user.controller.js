@@ -7,36 +7,46 @@ import bcrypt from "bcrypt"
 
 
 const registerUser = asyncHandler(async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const { username, email, password, role } = req.body;
 
-  // Validate required fields
-  if ([name, email, password].some((f) => !f?.trim())) {
-    throw new ApiError(400, "All fields are required");
+  if (!username?.trim()) {
+    throw new ApiError(400, "Username is required");
+  }
+  if (!email?.trim()) {
+    throw new ApiError(400, "Email is required");
+  }
+  if (!password?.trim()) {
+    throw new ApiError(400, "Password is required");
   }
 
-  // Validate role - only 'user' or 'admin' allowed
+
   const validRoles = ['user', 'admin'];
-  const userRole = role || 'user'; // default to 'user' if not provided
-  
+  const userRole = role || 'user'; 
   if (!validRoles.includes(userRole)) {
     throw new ApiError(400, "Role must be either 'user' or 'admin'");
   }
 
-  // Check if user exists
-  const existingUser = await User.findOne({ email });
-  if (existingUser) {
-    throw new ApiError(409, "User already exists with this email");
+  // Check if email exists
+  const existingUserByEmail = await User.findOne({ email });
+  if (existingUserByEmail) {
+    throw new ApiError(409, "Email is already registered");
+  }
+
+  // Check if username exists
+  const existingUserByUsername = await User.findOne({ username });
+  if (existingUserByUsername) {
+    throw new ApiError(409, "Username is already taken");
   }
 
   const user = await User.create({
-    name,
+    username,
     email,
     password,
     role: userRole,
   });
 
   const createdUser = await User.findById(user._id)
-    .select("-password -accessToken");
+    .select("-password -refreshToken");
     
   if(!createdUser){
     throw new ApiError(500,"Something went wrong while registering user")
