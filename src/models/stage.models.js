@@ -15,14 +15,18 @@ const stageSchema = new mongoose.Schema(
     description: String,
     status: {
       type: String,
-      enum: ["pending", "in_progress", "completed"],
-      default: "pending",
+      enum: ["not_started", "in_progress", "completed"],
+      default: "not_started",
       required: true,
     },
     created_by: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+    },
+    revision_number: {
+      type: Number,
+      default: 0,
     },
   },
   { timestamps: true }
