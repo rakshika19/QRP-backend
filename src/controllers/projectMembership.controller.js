@@ -2,12 +2,15 @@ import ProjectMembership from '../models/projectMembership.models.js';
 import Project from '../models/project.models.js';
 import { User } from '../models/user.models.js';
 
-// GET /api/v1/projects/members - Get project members
+// Hardcoded roles
+const VALID_ROLES = ['sdh', 'reviewer', 'executor'];
+
+// GET /api/v1/projects/:id/members - Get project members
 export const getProjectMembers = async (req, res) => {
     try {
-        const { id } = req.params; // ✅ Get project_id from URL parameter
+        const { id } = req.params;
         
-        console.log('Project ID from params:', id); // Add this debug line
+        console.log('Project ID from params:', id);
         
         // Check if project exists
         const project = await Project.findById(id);
@@ -19,18 +22,30 @@ export const getProjectMembers = async (req, res) => {
         }
 
         const members = await ProjectMembership.find({ project_id: id })
-            .populate('user_id', 'name email role')
-            .populate('role', 'role_name description');
+            .populate('user_id', 'username email');
+
+        // Format response
+        const formattedMembers = members.map(member => ({
+            membershipId: member._id,
+            userId: member.user_id._id,
+            username: member.user_id.username,
+            email: member.user_id.email,
+            role: member.role,
+            joinedAt: member.createdAt
+        }));
 
         res.status(200).json({
             success: true,
             data: {
-                project: project.project_name,
-                members: members
+                projectId: project._id,
+                projectName: project.project_name,
+                projectStatus: project.status,
+                totalMembers: formattedMembers.length,
+                members: formattedMembers
             }
         });
     } catch (error) {
-        console.error('Error in getProjectMembers:', error); // Add this debug line
+        console.error('Error in getProjectMembers:', error);
         res.status(500).json({
             success: false,
             message: error.message
@@ -38,23 +53,28 @@ export const getProjectMembers = async (req, res) => {
     }
 };
 
-// POST /api/v1/projects/members - Add member to project
+// POST /api/v1/projects/:id/members - Add member to project
 export const addProjectMember = async (req, res) => {
     try {
         const { id } = req.params;
-       
-        
+        const { user_id, role } = req.body;
+
+        // Validate role
+        if (!role || !VALID_ROLES.includes(role)) {
+            return res.status(400).json({
+                success: false,
+                message: `Role must be one of: ${VALID_ROLES.join(', ')}`
+            });
+        }
+
+        // Check if project exists
         const project = await Project.findById(id);
-       
-        
         if (!project) {
             return res.status(404).json({
                 success: false,
                 message: 'Project not found'
             });
         }
-
-        const { user_id, role_id } = req.body;
 
         // Check if user exists
         const user = await User.findById(user_id);
@@ -65,24 +85,27 @@ export const addProjectMember = async (req, res) => {
             });
         }
 
-        // Check if role exists
-        const role = await Role.findById(role_id);
-        if (!role) {
-            return res.status(404).json({
+        // Check if user already has a role in this project
+        const existingMembership = await ProjectMembership.findOne({
+            project_id: id,
+            user_id: user_id
+        });
+
+        if (existingMembership) {
+            return res.status(409).json({
                 success: false,
-                message: 'Role not found'
+                message: 'User already has a role in this project'
             });
         }
 
         const membership = await ProjectMembership.create({
             project_id: id,
             user_id: user_id,
-            role: role_id
+            role: role
         });
 
         const populatedMembership = await ProjectMembership.findById(membership._id)
-            .populate('user_id', 'name email')
-            .populate('role', 'role_name description');
+            .populate('user_id', 'username email');
 
         res.status(201).json({
             success: true,
@@ -90,13 +113,6 @@ export const addProjectMember = async (req, res) => {
         });
     } catch (error) {
         console.error('❌ Error:', error);
-        // Handle duplicate key error
-        if (error.code === 11000) {
-            return res.status(409).json({
-                success: false,
-                message: 'User already has this role in the project'
-            });
-        }
         res.status(500).json({
             success: false,
             message: error.message
@@ -104,27 +120,25 @@ export const addProjectMember = async (req, res) => {
     }
 };
 
-// PUT /api/v1/projects/members - Update member role
+// PUT /api/v1/projects/:id/members/:userId - Update member role
 export const updateProjectMember = async (req, res) => {
     try {
-        const { project_id, user_id, role_id } = req.body;
+        const { id, userId } = req.params;
+        const { role } = req.body;
 
-        // Check if role exists
-        const role = await Role.findById(role_id);
-        if (!role) {
-            return res.status(404).json({
+        // Validate role
+        if (!role || !VALID_ROLES.includes(role)) {
+            return res.status(400).json({
                 success: false,
-                message: 'Role not found'
+                message: `Role must be one of: ${VALID_ROLES.join(', ')}`
             });
         }
 
         const membership = await ProjectMembership.findOneAndUpdate(
-            { project_id: project_id, user_id: user_id },
-            { role: role_id },
+            { project_id: id, user_id: userId },
+            { role: role },
             { new: true }
-        )
-        .populate('user_id', 'name email')
-        .populate('role', 'role_name description');
+        ).populate('user_id', 'username email');
 
         if (!membership) {
             return res.status(404).json({
@@ -145,14 +159,14 @@ export const updateProjectMember = async (req, res) => {
     }
 };
 
-// DELETE /api/v1/projects/members - Remove member from project
+// DELETE /api/v1/projects/:id/members/:userId - Remove member from project
 export const removeProjectMember = async (req, res) => {
     try {
-        const { project_id, user_id } = req.body;
+        const { id, userId } = req.params;
 
         const membership = await ProjectMembership.findOneAndDelete({
-            project_id: project_id,
-            user_id: user_id
+            project_id: id,
+            user_id: userId
         });
 
         if (!membership) {
@@ -189,13 +203,12 @@ export const getUserProjects = async (req, res) => {
         }
 
         const projects = await ProjectMembership.find({ user_id: id })
-            .populate('project_id', 'project_name status start_date end_date')
-            .populate('role', 'role_name description');
+            .populate('project_id', 'project_name status start_date end_date');
 
         res.status(200).json({
             success: true,
             data: {
-                user: user.name,
+                user: user.username,
                 projects: projects
             }
         });

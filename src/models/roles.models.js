@@ -1,20 +1,20 @@
-import mongoose from 'mongoose';
+// import mongoose from 'mongoose';
 
-const roleSchema = new mongoose.Schema(
-  {
+// const roleSchema = new mongoose.Schema(
+//   {
    
-    role_name: {
-      type: String,
-      required: true,
-      unique: true, 
-      trim: true
-    },
-    description: {
-      type: String,
-      trim: true
-    },
-  },
-  { timestamps: true }
-);
+//     role_name: {
+//       type: String,
+//       required: true,
+//       unique: true, 
+//       trim: true
+//     },
+//     description: {
+//       type: String,
+//       trim: true
+//     },
+//   },
+//   { timestamps: true }
+// );
 
-export const Role = mongoose.model("Role", roleSchema);
+// export const Role = mongoose.model("Role", roleSchema);

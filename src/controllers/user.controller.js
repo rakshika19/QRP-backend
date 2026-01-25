@@ -64,7 +64,8 @@ const loginUser = asyncHandler(async (req, res) => {
   if (!email) throw new ApiError(400, "Email is required");
   if (!password) throw new ApiError(400, "Password is required");
 
-  const existedUser = await User.findOne({ email });
+  // Use .select("+password") to explicitly fetch the password field
+  const existedUser = await User.findOne({ email }).select("+password");
 
   if (!existedUser) throw new ApiError(400, "User not found with this email");
 
@@ -73,7 +74,7 @@ const loginUser = asyncHandler(async (req, res) => {
   if (!passwordMatch) throw new ApiError(400, "Invalid password");
 
   // Generate both tokens
-  const accessToken = await existedUser.generateAccessToken();
+  const accessToken = await  existedUser.generateAccessToken();
   const refreshToken = await existedUser.generateRefreshToken();
 
   // Save refreshToken to database

@@ -18,7 +18,8 @@ const projectSchema = new mongoose.Schema(
       required: true
     },
     end_date: {
-      type: Date
+      type: Date,
+      default: null
     },
     created_by: {
       type: mongoose.Schema.Types.ObjectId,

@@ -10,11 +10,11 @@ import authMiddleware from "../middleware/auth.Middleware.js";
 
 const router = express.Router();
 
-router.get("/", getAllUsers);            // GET /api/v1/users
-router.post("/register", registerUser);
 router.post("/login", loginUser);
+router.post("/register", registerUser);
 router.post("/logout", authMiddleware, logoutUser);
 
+router.get("/", getAllUsers);            // GET /api/v1/users
 // User projects route
 router.get("/:id/projects", getUserProjects);
 

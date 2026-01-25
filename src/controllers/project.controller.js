@@ -47,19 +47,20 @@ export const getProjectById = async (req, res) => {
 // Create new project
 export const createProject = async (req, res) => {
     try {
-        const { project_name, status, start_date, end_date, created_by } = req.body;
+        const { project_name, start_date } = req.body;
+        const createdByUser = req.user._id;
         
         const project = await Project.create({
             project_name,
-            status,
             start_date,
-            end_date,
-            created_by
+            status: "pending",  // Always "pending" on creation
+            end_date: null,     // Default to null
+            created_by: createdByUser
         });
         
         // Populate the created project
         const populatedProject = await Project.findById(project._id)
-            .populate('created_by', 'name email');
+            .populate('created_by', 'username email');
         
         res.status(201).json({
             success: true,
