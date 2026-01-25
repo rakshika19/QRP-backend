@@ -1,7 +1,6 @@
 import ProjectMembership from '../models/projectMembership.models.js';
 import Project from '../models/project.models.js';
 import { User } from '../models/user.models.js';
-import { Role } from '../models/roles.models.js';
 
 // GET /api/v1/projects/members - Get project members
 export const getProjectMembers = async (req, res) => {

@@ -1,38 +1,39 @@
-import jwt from "jsonwebtoken";
-import { User } from "../models/user.models.js";
-import { ApiError } from "../utils/ApiError.js";
+import jwt from 'jsonwebtoken';
+import { User } from '../models/user.models.js';
 
-const authMiddleware = async (req, _, next) => {
+const verifyJWT = async (req, res, next) => {
   try {
-    // Get token from cookies or Authorization header
-    const token = req.cookies?.token || req.header("Authorization")?.replace("Bearer ", "");
-    
+    const authHeader = req.headers.authorization;
+    const token = authHeader ? authHeader.split(' ')[1] : null;
+
     if (!token) {
-      throw new ApiError(401, "Not authenticated");
+      return res.status(401).json({
+        message: 'Access token is missing'
+      });
     }
 
-    // Verify and decode the token
-    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-    
-    // Find user by _id from decoded token
-    const user = await User.findById(decoded?._id).select("-password").populate("role");
+    const decodedToken = jwt.verify(
+      token,
+      process.env.ACCESS_TOKEN_SECRET
+    );
+
+    const user = await User.findById(decodedToken._id);
 
     if (!user) {
-      throw new ApiError(401, "Invalid token - user not found");
+      return res.status(401).json({
+        message: 'Invalid token: user not found'
+      });
     }
 
-    // Attach user to request
+    // Attach user to request for controllers
     req.user = user;
     next();
+
   } catch (error) {
-    if (error.name === "JsonWebTokenError") {
-      next(new ApiError(401, "Invalid token"));
-    } else if (error.name === "TokenExpiredError") {
-      next(new ApiError(401, "Token expired"));
-    } else {
-      next(error);
-    }
+    return res.status(401).json({
+      message: 'Invalid or expired token'
+    });
   }
 };
 
-export default authMiddleware;
+export default verifyJWT;
