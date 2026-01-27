@@ -1,15 +1,10 @@
-
-
-
-
-
 import Template from "../models/template.model.js";
-import {asyncHandler} from "../utils/asyncHandler.js";
-import {ApiError} from "../utils/ApiError.js";
-import {ApiResponse} from "../utils/ApiResponse.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 
 /**
- * CREATE TEMPLATE (only once)
+ * CREATE TEMPLATE
  */
 export const createTemplate = asyncHandler(async (req, res) => {
   const { name } = req.body;
@@ -18,192 +13,272 @@ export const createTemplate = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Template name is required");
   }
 
-  const exists = await Template.findOne();
-  if (exists) {
+  const existing = await Template.findOne();
+  if (existing) {
     throw new ApiError(400, "Template already exists");
   }
 
-  const template = await Template.create({ name });
+  const template = await Template.create({
+    name,
+    stages: [],
+  });
+  
 
   return res
     .status(201)
-    .json(new ApiResponse(201, template, "Template created"));
+    .json(new ApiResponse(201, template, "Template created successfully"));
 });
 
 /**
- * GET TEMPLATE
+ * GET ALL TEMPLATES
  */
 export const getTemplate = asyncHandler(async (req, res) => {
-  const template = await Template.findOne();
+  const template = await Template.findOne();  // ✅ Changed from find()
+  
   if (!template) {
     throw new ApiError(404, "Template not found");
   }
 
   return res
     .status(200)
-    .json(new ApiResponse(200, template, "Template fetched"));
+    .json(new ApiResponse(200, template, "Template fetched successfully"));
 });
 
 /**
- * ADD CHECKLIST
+ * GET SINGLE TEMPLATE
  */
-export const addChecklist = asyncHandler(async (req, res) => {
-  const { stage, text } = req.body;
+export const getTemplateById = asyncHandler(async (req, res) => {
+  const { templateId } = req.params;
 
-  if (!stage || !text) {
-    throw new ApiError(400, "stage and text are required");
+  const template = await Template.findById(templateId);
+  if (!template) {
+    throw new ApiError(404, "Template not found");
   }
-
-  if (!["stage1", "stage2", "stage3"].includes(stage)) {
-    throw new ApiError(400, "Invalid stage");
-  }
-
-  const template = await Template.findOne();
-  if (!template) throw new ApiError(404, "Template not found");
-
-  template[stage].push({ text, checkpoints: [] });
-
-  await template.save();
 
   return res
     .status(200)
-    .json(new ApiResponse(200, template, "Checklist added"));
+    .json(new ApiResponse(200, template, "Template fetched successfully"));
 });
 
 /**
- * UPDATE CHECKLIST TEXT ✅ FIXED
+ * ADD STAGE
  */
-export const updateChecklist = asyncHandler(async (req, res) => {
-  const { checklistId } = req.params;
-  const { stage, text } = req.body;
+export const addStage = asyncHandler(async (req, res) => {
+  const { templateId } = req.params;
+  const { stageName } = req.body;
 
-  if (!stage || !text) {
-    throw new ApiError(400, "Stage and text are required");
+  if (!stageName) {
+    throw new ApiError(400, "stageName is required");
   }
 
-  const template = await Template.findOne();
-  if (!template) throw new ApiError(404, "Template not found");
-
-  const checklist = template[stage]?.find(item => item._id.toString() === checklistId);
-  if (!checklist) throw new ApiError(404, "Checklist not found");
-
-  checklist.text = text;
-
-  await template.save();
-
-  return res
-    .status(200)
-    .json(new ApiResponse(200, template, "Checklist updated"));
-});
-
-/**
- * DELETE CHECKLIST ✅ (Already Fixed)
- */
-export const deleteChecklist = asyncHandler(async (req, res) => {
-  const { checklistId } = req.params;
-  const { stage } = req.body;
-
-  if (!stage) {
-    throw new ApiError(400, "Stage is required");
+  const template = await Template.findById(templateId);
+  if (!template) {
+    throw new ApiError(404, "Template not found");
   }
-
-  const template = await Template.findOne();
-  if (!template) throw new ApiError(404, "Template not found");
-
-  if (!template[stage]) {
-    throw new ApiError(400, "Invalid stage");
-  }
-
-  template[stage] = template[stage].filter(
-    (item) => item._id.toString() !== checklistId
+  const exists = template.stages.some(
+    s => s.stageName.toLowerCase() === stageName.toLowerCase()
   );
 
+  if (exists) {
+    throw new ApiError(400, "Stage already exists");
+  }
+
+  template.stages.push({
+    stageName,
+    subTopics: [],
+  });
+
   await template.save();
 
   return res
     .status(200)
-    .json(new ApiResponse(200, null, "Checklist deleted"));
+    .json(new ApiResponse(200, template, "Stage added successfully"));
 });
 
 /**
- * ADD CHECKPOINT ✅ FIXED
+ * ADD SUBTOPIC (using stageIndex)
+ */
+export const addSubtopic = asyncHandler(async (req, res) => {
+  const { templateId, stageIndex } = req.params;
+  const { subTopic } = req.body;
+
+  if (!subTopic) {
+    throw new ApiError(400, "subTopic is required");
+  }
+
+  const template = await Template.findById(templateId);
+  if (!template) {
+    throw new ApiError(404, "Template not found");
+  }
+
+  if (stageIndex < 0 || stageIndex >= template.stages.length) {
+    throw new ApiError(400, "Invalid stage index");
+  }
+
+  template.stages[stageIndex].subTopics.push({
+    subTopic,
+    checkpoints: [],
+  });
+
+  await template.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, template, "SubTopic added successfully"));
+});
+
+/**
+ * ADD CHECKPOINT (using stageIndex + subTopicIndex)
  */
 export const addCheckpoint = asyncHandler(async (req, res) => {
-  const { checklistId } = req.params;
-  const { stage, text } = req.body;
+  const { templateId, stageIndex, subTopicIndex } = req.params;
+  const { checkpoint } = req.body;
 
-  if (!stage || !text) {
-    throw new ApiError(400, "Stage and text are required");
+  if (!checkpoint) {
+    throw new ApiError(400, "Checkpoint text is required");
   }
 
-  const template = await Template.findOne();
-  if (!template) throw new ApiError(404, "Template not found");
+  const template = await Template.findById(templateId);
+  if (!template) {
+    throw new ApiError(404, "Template not found");
+  }
 
-  const checklist = template[stage]?.find(item => item._id.toString() === checklistId);
-  if (!checklist) throw new ApiError(404, "Checklist not found");
+  const stage = template.stages[stageIndex];
+  if (!stage) {
+    throw new ApiError(400, "Invalid stage index");
+  }
 
-  checklist.checkpoints.push({ text });
+  const subTopic = stage.subTopics[subTopicIndex];
+  if (!subTopic) {
+    throw new ApiError(400, "Invalid subTopic index");
+  }
+
+  subTopic.checkpoints.push(checkpoint);
 
   await template.save();
 
   return res
     .status(200)
-    .json(new ApiResponse(200, template, "Checkpoint added"));
+    .json(new ApiResponse(200, template, "Checkpoint added successfully"));
 });
 
-/**
- * UPDATE CHECKPOINT TEXT ✅ FIXED
- */
+export const updateSubtopic = asyncHandler(async (req, res) => {
+  const { templateId, stageIndex, subTopicIndex } = req.params;
+
+  const { subTopic } = req.body;
+
+  if (!subTopic) {
+    throw new ApiError(400, "subTopic is required");
+  }
+
+  const template = await Template.findById(templateId);
+  if (!template) {
+    throw new ApiError(404, "Template not found");
+  }
+
+  if (stageIndex < 0 || stageIndex >= template.stages.length) {
+    throw new ApiError(400, "Invalid stage index");
+  }
+
+  if (subTopicIndex < 0 || subTopicIndex >= template.stages[stageIndex].subTopics.length) {
+    throw new ApiError(400, "Invalid subTopic index");
+  }
+
+  template.stages[stageIndex].subTopics[subTopicIndex].subTopic = subTopic;
+
+  await template.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, template, "SubTopic updated successfully"));
+});
+
+export const deleteSubtopic = asyncHandler(async (req, res) => {
+  const { templateId, stageIndex, subTopicIndex } = req.params;
+
+  const template = await Template.findById(templateId);
+  if (!template) {
+    throw new ApiError(404, "Template not found");
+  }
+
+  if (stageIndex < 0 || stageIndex >= template.stages.length) {
+    throw new ApiError(400, "Invalid stage index");
+  }
+
+  if (subTopicIndex < 0 || subTopicIndex >= template.stages[stageIndex].subTopics.length) {
+    throw new ApiError(400, "Invalid subTopic index");
+  }
+
+  template.stages[stageIndex].subTopics.splice(subTopicIndex, 1);
+
+  await template.save();
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, template, "SubTopic deleted successfully"));
+});
+
 export const updateCheckpoint = asyncHandler(async (req, res) => {
-  const { checkpointId } = req.params;
-  const { stage, checklistId, text } = req.body;
+  const { templateId, stageIndex, subTopicIndex, checkpointIndex } = req.params;
+  const { checkpoint } = req.body;
 
-  if (!stage || !checklistId || !text) {
-    throw new ApiError(400, "Stage, checklistId, and text are required");
+  if (!checkpoint) {
+    throw new ApiError(400, "Checkpoint is required");
   }
 
-  const template = await Template.findOne();
-  if (!template) throw new ApiError(404, "Template not found");
+  const template = await Template.findById(templateId);
+  if (!template) {
+    throw new ApiError(404, "Template not found");
+  }
 
-  const checklist = template[stage]?.find(item => item._id.toString() === checklistId);
-  if (!checklist) throw new ApiError(404, "Checklist not found");
+  const stage = template.stages[stageIndex];
+  if (!stage) {
+    throw new ApiError(400, "Invalid stage index");
+  }
 
-  const checkpoint = checklist.checkpoints.find(item => item._id.toString() === checkpointId);
-  if (!checkpoint) throw new ApiError(404, "Checkpoint not found");
+  const subTopic = stage.subTopics[subTopicIndex];
+  if (!subTopic) {
+    throw new ApiError(400, "Invalid subTopic index");
+  }
 
-  checkpoint.text = text;
+  if (checkpointIndex < 0 || checkpointIndex >= subTopic.checkpoints.length) {
+    throw new ApiError(400, "Invalid checkpoint index");
+  }
+  subTopic.checkpoints[checkpointIndex] = checkpoint;
 
   await template.save();
 
   return res
     .status(200)
-    .json(new ApiResponse(200, template, "Checkpoint updated"));
+    .json(new ApiResponse(200, template, "Checkpoint updated successfully"));
 });
 
-/**
- * DELETE CHECKPOINT ✅ FIXED
- */
 export const deleteCheckpoint = asyncHandler(async (req, res) => {
-  const { checkpointId } = req.params;
-  const { stage, checklistId } = req.body;
+  const { templateId, stageIndex, subTopicIndex, checkpointIndex } = req.params;
 
-  if (!stage || !checklistId) {
-    throw new ApiError(400, "Stage and checklistId are required");
+  const template = await Template.findById(templateId);
+  if (!template) {
+    throw new ApiError(404, "Template not found");
   }
 
-  const template = await Template.findOne();
-  if (!template) throw new ApiError(404, "Template not found");
+  const stage = template.stages[stageIndex];
+  if (!stage) {
+    throw new ApiError(400, "Invalid stage index");
+  }
 
-  const checklist = template[stage]?.find(item => item._id.toString() === checklistId);
-  if (!checklist) throw new ApiError(404, "Checklist not found");
+  const subTopic = stage.subTopics[subTopicIndex];
+  if (!subTopic) {
+    throw new ApiError(400, "Invalid subTopic index");
+  }
 
-  checklist.checkpoints = checklist.checkpoints.filter(
-    (item) => item._id.toString() !== checkpointId
-  );
+  if (checkpointIndex < 0 || checkpointIndex >= subTopic.checkpoints.length) {
+    throw new ApiError(400, "Invalid checkpoint index");
+  }
+
+  subTopic.checkpoints.splice(checkpointIndex, 1);
 
   await template.save();
-
   return res
     .status(200)
-    .json(new ApiResponse(200, null, "Checkpoint deleted"));
+    .json(new ApiResponse(200, template, "Checkpoint deleted successfully"));
 });
