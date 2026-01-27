@@ -4,62 +4,68 @@ import authMiddleware from "../middleware/auth.Middleware.js";
 import {
   createTemplate,
   getTemplate,
-  addChecklist,
+  addStage,
+  addSubtopic,
+  updateSubtopic,
+  deleteSubtopic,
   addCheckpoint,
-  updateChecklist,
   updateCheckpoint,
-  deleteChecklist,
   deleteCheckpoint,
 } from "../controllers/template.controller.js";
 
 const router = Router();
 
 /**
- * Only ONE template in system
+ * Template Routes (Only ONE template in system)
  */
-router.post("/template", authMiddleware, createTemplate);
-router.get("/template", authMiddleware, getTemplate);
+router.post("/", authMiddleware, createTemplate);           // POST /api/templates
+router.get("/", authMiddleware, getTemplate);              // GET /api/templates
 
 /**
- * Checklist operations (PATCH)
+ * Stage Routes
  */
-router.patch(
-  "/template/checklists",
+router.post("/:templateId/stages", authMiddleware, addStage);  // POST /api/templates/:templateId/stages
+
+/**
+ * SubTopic Routes
+ */
+router.post(
+  "/:templateId/stages/:stageIndex/subtopics",
   authMiddleware,
-  addChecklist
-);
+  addSubtopic
+);                                                           // POST /api/templates/:templateId/stages/:stageIndex/subtopics
 
 router.patch(
-  "/template/checklists/:checklistId",
+  "/:templateId/stages/:stageIndex/subtopics/:subTopicIndex",
   authMiddleware,
-  updateChecklist
-);
+  updateSubtopic
+);                                                           // PATCH /api/templates/:templateId/stages/:stageIndex/subtopics/:subTopicIndex
 
 router.delete(
-  "/template/checklists/:checklistId",
+  "/:templateId/stages/:stageIndex/subtopics/:subTopicIndex",
   authMiddleware,
-  deleteChecklist
-);
+  deleteSubtopic
+);                                                           // DELETE /api/templates/:templateId/stages/:stageIndex/subtopics/:subTopicIndex
 
 /**
- * Checkpoint operations (PATCH)
+ * Checkpoint Routes
  */
-router.patch(
-  "/template/checklists/:checklistId/checkpoints",
+router.post(
+  "/:templateId/stages/:stageIndex/subtopics/:subTopicIndex/checkpoints",
   authMiddleware,
   addCheckpoint
-);
+);                                                           // POST /api/templates/:templateId/stages/:stageIndex/subtopics/:subTopicIndex/checkpoints
 
 router.patch(
-  "/template/checkpoints/:checkpointId",
+  "/:templateId/stages/:stageIndex/subtopics/:subTopicIndex/checkpoints/:checkpointIndex",
   authMiddleware,
   updateCheckpoint
-);
+);                                                           // PATCH /api/templates/:templateId/stages/:stageIndex/subtopics/:subTopicIndex/checkpoints/:checkpointIndex
 
 router.delete(
-  "/template/checkpoints/:checkpointId",
+  "/:templateId/stages/:stageIndex/subtopics/:subTopicIndex/checkpoints/:checkpointIndex",
   authMiddleware,
   deleteCheckpoint
-);
+);                                                           // DELETE /api/templates/:templateId/stages/:stageIndex/subtopics/:subTopicIndex/checkpoints/:checkpointIndex
 
 export default router;
