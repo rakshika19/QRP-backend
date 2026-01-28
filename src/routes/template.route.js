@@ -33,7 +33,7 @@ router.post("/:templateId/stages", authMiddleware, addStage);  // POST /api/temp
  */
 // Add a subtopic to a specific stage
 router.post(
-  "/:templateId/stages/:stageIndex/subtopics",
+  "/:templateId/stages/:stageId/subtopics",
   authMiddleware,
   addSubtopic
 );                                                           // POST /api/templates/:templateId/stages/:stageIndex/subtopics
@@ -50,7 +50,7 @@ router.delete(
  */
 // Add a checkpoint to a specific subtopic
 router.post(
-  "/:templateId/stages/:stageIndex/subtopics/:subTopicIndex/checkpoints",
+  "/:templateId/stages/:stageId/subtopics/:subTopicId/checkpoints",
   authMiddleware,
   addCheckpoint
 );                                                           // POST /api/templates/:templateId/stages/:stageIndex/subtopics/:subTopicIndex/checkpoints

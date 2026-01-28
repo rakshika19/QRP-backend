@@ -83,11 +83,11 @@ export const addStage = asyncHandler(async (req, res) => {
  * ADD SUBTOPIC (using stageIndex)
  */
 export const addSubtopic = asyncHandler(async (req, res) => {
-  const { templateId, stageIndex } = req.params;
-  const { subTopic } = req.body;
+  const { templateId, stageId } = req.params;
+  const { subTopicName } = req.body;
 
-  if (!subTopic) {
-    throw new ApiError(400, "subTopic is required");
+  if (!subTopicName) {
+    throw new ApiError(400, "subTopicName is required");
   }
 
   const template = await Template.findById(templateId);
@@ -95,12 +95,13 @@ export const addSubtopic = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Template not found");
   }
 
-  if (stageIndex < 0 || stageIndex >= template.stages.length) {
-    throw new ApiError(400, "Invalid stage index");
+  const stage = template.stages.id(stageId);
+  if (!stage) {
+    throw new ApiError(404, "Stage not found");
   }
 
-  template.stages[stageIndex].subTopics.push({
-    subTopic,
+  stage.subTopics.push({
+    subTopicName,
     checkpoints: [],
   });
 
@@ -111,11 +112,12 @@ export const addSubtopic = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, template, "SubTopic added successfully"));
 });
 
+
 /**
  * ADD CHECKPOINT (using stageIndex + subTopicIndex)
  */
 export const addCheckpoint = asyncHandler(async (req, res) => {
-  const { templateId, stageIndex, subTopicIndex } = req.params;
+  const { templateId, stageId, subTopicId } = req.params;
   const { checkpoint } = req.body;
 
   if (!checkpoint) {
@@ -127,12 +129,12 @@ export const addCheckpoint = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Template not found");
   }
 
-  const stage = template.stages[stageIndex];
+  const stage = template.stages.id(stageId);
   if (!stage) {
     throw new ApiError(400, "Invalid stage index");
   }
 
-  const subTopic = stage.subTopics[subTopicIndex];
+  const subTopic = stage.subTopics.id(subTopicId);
   if (!subTopic) {
     throw new ApiError(400, "Invalid subTopic index");
   }

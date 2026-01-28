@@ -34,7 +34,7 @@ app.use("/api/v1/stages",stageRouter)
 app.use("/api/v1/users",userRouter)
 // app.use('/api/v1/roles', roleRoutes);
 // app.use("/api/v1/checkpoint",checkPointRoutes);
-app.use("/app/v1/template",templateRoutes);
+app.use("/api/v1/template",templateRoutes);
 app.use('/api/v1/projects', projectRoutes);
 app.use('/api/v1/projects-membership', projectMembershipRoutes);
 
