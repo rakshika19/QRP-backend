@@ -14,9 +14,9 @@ const stageSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["not_started", "in_progress", "completed"],
-      default: "not_started",
-      required: true,
+      enum: ["NOT_STARTED", "DRAFT", "IN_REVIEW","COMPLETED"],
+      default: "NOT_STARTED",
+     
     },
     created_by: {
       type: mongoose.Schema.Types.ObjectId,

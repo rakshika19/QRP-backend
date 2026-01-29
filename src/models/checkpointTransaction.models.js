@@ -1,6 +1,36 @@
 import mongoose from "mongoose";
 
+// Define responseSchema FIRST before using it
+const responseSchema = new mongoose.Schema(
+    {
+        answer: {
+            type: Boolean, // true = YES, false = NO
+            default: null,
+        },
+        
+    remark: {
+      type: String,
+      trim: true,
+    },
 
+    images: [
+      {
+        data: {
+          type: Buffer,     // image binary
+          select: false,    // 🔥 do NOT fetch by default
+        },
+        contentType: {
+          type: String,     // image/png, image/jpeg
+        },
+      },
+    ],
+
+    respondedAt: {
+      type: Date,
+    },
+  },
+  { _id: false }
+);
 
 const checkPointTransactionSchema = new mongoose.Schema(
   {
@@ -38,38 +68,6 @@ const checkPointTransactionSchema = new mongoose.Schema(
     },
   },
   { timestamps: true }
-);
-
-
-const responseSchema = new mongoose.Schema(
-    {
-        answer: {
-            type: Boolean, // true = YES, false = NO
-            default: null,
-        },
-        
-    remark: {
-      type: String,
-      trim: true,
-    },
-
-    images: [
-      {
-        data: {
-          type: Buffer,     // image binary
-          select: false,    // 🔥 do NOT fetch by default
-        },
-        contentType: {
-          type: String,     // image/png, image/jpeg
-        },
-      },
-    ],
-
-    respondedAt: {
-      type: Date,
-    },
-  },
-  { _id: false }
 );
 
 

@@ -193,7 +193,7 @@ export const startProject = async (req, res) => {
             const stage = await Stage.create({
                 project_id: projectId,
                 stage_name: stageData.stageName,
-                status: 'not_started',
+                status: 'NOT_STARTED',
                 created_by: userId,
                 revision_number: 0
             });
